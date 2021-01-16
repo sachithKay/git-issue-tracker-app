@@ -1,20 +1,18 @@
 import Axios from 'axios';
-
 const https = require('https');
 
-const baseURL = 'https://localhost:8243/git-issues/1.0.0';
-const httpsAgent = new https.Agent({rejectUnauthorized: false});
+const tokenAPIUrl = 'https://localhost:8243/token';
+const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
-export default class ClientAPI {
-    getHTTPClient(bearer) {
+export default class AccessAPI {
 
+    getHTTPClient() {
         let httpClient = Axios.create({
-            baseURL: baseURL,
+            baseURL: tokenAPIUrl,
             timeout: 30000,
             httpsAgent: httpsAgent,
-            headers: {"Authorization": `Bearer ${bearer}`, 'Content-Type': 'application/x-www-form-urlencoded'}
+            headers: {"Authorization": "Basic S19hMENoX2ZfTVFfNkpxZWN2QUJQeDlCb3ZJYTpWTmc2bDlubW9aVHRUTXdza2ZVcTFMOTVpYmth", 'Content-Type': 'application/x-www-form-urlencoded'}
         });
-        httpClient.defaults.headers.post['Content-Type'] = 'application/json';
         httpClient.interceptors.response.use(function (response) {
             return response;
         }, function (error) {
@@ -30,11 +28,9 @@ export default class ClientAPI {
         return httpClient;
     }
 
-    getIssueSummary(bearer) {
-        return this.getHTTPClient(bearer).post('/summary');
-    }
-
-    getIssueList(bearer) {
-        return this.getHTTPClient(bearer).get('');
+    getAccessToken() {
+        const params = new URLSearchParams();
+        params.append('grant_type', 'client_credentials');
+        return this.getHTTPClient().post('', params);
     }
 }

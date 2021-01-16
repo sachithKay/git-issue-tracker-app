@@ -4,6 +4,8 @@ import Parent from './Parent';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import DataTable from 'react-data-table-component';
+import ClientAPI from '../utils/apis/ClientAPI';
+import AccessAPI from '../utils/apis/AccessAPI'
 
 class IssuePage extends Component {
 
@@ -11,35 +13,28 @@ class IssuePage extends Component {
         super(props);
         this.state = {
             activeTab: 'home',
+            issueList: [],
         };
-
-        this.handleSelect = this.handleSelect.bind(this);
     }
 
-    handleSelect(selectedTab) {
-        // The active tab must be set into the state so that
-        // the Tabs component knows about the change and re-renders.
-        this.setState({
-            activeTab: selectedTab
-        });
-    }
+    componentDidMount() {
+        new AccessAPI().getAccessToken().then((accessResponse) => {
+            new ClientAPI().getIssueList(accessResponse.data.access_token).then((clientResponse) => {
+                this.setState({issueList: clientResponse.data.items});
+            }).catch((error) => {
+                window.alert('Error while retrieving git issues')
+            });
+        }).catch((error) => {
+                window.alert('Auth failure')
+            }
+        );
 
+    }
 
     render() {
        return(
            <Parent>
-               <Tabs>
-                   <TabList>
-                       <Tab>Issue Summary</Tab>
-                       <Tab>Issues</Tab>
-                   </TabList>
-                   <TabPanel>
-                       {this.renderIssueSummary()}
-                   </TabPanel>
-                   <TabPanel>
-                       <h2>issues</h2>
-                   </TabPanel>
-               </Tabs>
+               {this.renderIssueList()}
            </Parent>
        );
     }
@@ -69,12 +64,46 @@ class IssuePage extends Component {
                 title="Issue Summary [EI]"
                 columns={columns}
                 data={data}
+                pagination={true}
+                paginationPerPage={10}
             />
         );
     }
 
     renderIssueList() {
-        
+        const { issueList } = this.state;
+        console.log(issueList);
+        const columns = [
+            {
+                name: 'URL',
+                selector: 'html_url',
+                sortable: true,
+            },
+            {
+                name: 'Title',
+                selector: 'title',
+                sortable: true,
+            },
+            {
+                name: 'Created By',
+                selector: 'user.login',
+                sortable: true,
+            },
+            {
+                name: 'State',
+                selector: 'state',
+                sortable: true,
+            },
+
+        ];
+
+        return (
+            <DataTable
+                title="Issues in EI"
+                columns={columns}
+                data={issueList}
+            />
+        );
     }
 }
 
